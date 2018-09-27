@@ -280,8 +280,8 @@ def lx_main(args):
                 main_name = new_main_name
         else:
             main_name = args.main
-            if not main_name.endswith('.py'):
-                main_name = main_name + '.py'
+        if not main_name.endswith('.py'):
+            main_name = main_name + '.py'
 
         if args.no_git:
             print("skipping git initialization")
@@ -297,7 +297,7 @@ def lx_main(args):
             lx_git('add', str(__file__))
 
             for dep_name, dep_url in DEFAULT_DEPS.items():
-                dest_path = '{}{}{}'.format(DEPS_DIR, os.path.sep, dep_name)
+                dest_path = '{}{}{}'.format(DEPS_DIR, '/', dep_name)
                 if not os.path.exists(dest_path):
                     lx_git('submodule', 'add', dep_url, dest_path)
                     lx_git('add', dest_path)
