@@ -19,7 +19,7 @@ NOTE: The initial setup process is, admittedly, a little rough.  Patches are wel
 You can execute `lxbuildenv.py` directly.  Run `python lxbuildenv.py --init` to create a new project.  This will perform the following steps:
 
 1. Ask you for a main entrypoint name, if `--main` was not set
-1. Create a git repository, if one does not already exist
+1. Create a git repository, if one does not already exist, unless `--no-git` was set
 1. Create a `bin` directory and populate it, if `--no-bin` was not set
 1. Create an initial template program
 

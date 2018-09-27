@@ -11,6 +11,12 @@ import argparse
 
 DEPS_DIR = "deps"
 
+DEFAULT_DEPS = {
+    'migen': 'https://github.com/m-labs/migen.git',
+    'litex': 'https://github.com/enjoy-digital/litex.git',
+    'litescope': 'https://github.com/enjoy-digital/litescope.git',
+    'pyserial': 'https://github.com/pyserial/pyserial.git',
+}
 # Obtain the path to this script, plus a trailing separator.  This will
 # be used later on to construct various environment variables for paths
 # to a variety of support directories.
@@ -91,7 +97,7 @@ def fixup_env(script_path, args):
 
     # Set the environment variable "V" to 1.  This causes Makefiles to print
     # the commands they run, which makes them easier to debug.
-    if args.lx_verbose:
+    if "lx_verbose" in args and args.lx_verbose:
         os.environ["V"] = "1"
 
     # If the user just wanted to print the environment variables, do that and quit.
@@ -234,43 +240,75 @@ def check_submodules(script_path, args):
         print("Submodule check: Submodules found")
 
 
-def main(args):
-    if args.init:
-        main_name = os.getcwd().split(os.path.sep)[-1] + '.py'
-        new_main_name = input('What would you like your main program to be called? [' + main_name + '] ')
-        if new_main_name is not None and new_main_name != "":
-            main_name = new_main_name
+def lx_git(cmd, *args):
+    import subprocess
+    git_cmd = ["git", cmd]
+    if args is not None:
+        for arg in args:
+            git_cmd = git_cmd + [arg]
+    subprocess.call(git_cmd)
 
-        print("Initializing git repository")
-        if not os.path.exists(DEPS_DIR):
-            os.mkdir(DEPS_DIR)
+def lx_print_deps():
+    print('Known dependencies:')
+    for dep in dependency_checkers.keys():
+        print('    {}'.format(dep))
+    print('To define a dependency, add a variable inside {} at the top level called LX_DEPENDENCIES and assign it a list or tuple.'.format(sys.argv[0]))
+    print('For example:')
+    print('LX_DEPENDENCIES = ("riscv", "vivado")')
 
-        os.system("git init")
-        os.system("git add " + str(__file__))
 
-        os.system("git submodule add https://github.com/m-labs/migen.git deps/migen")
-        os.system("git add deps/migen")
+def lx_main(args):
+    if args.lx_print_env:
+        fixup_env(script_path, args)
 
-        os.system("git submodule add https://github.com/enjoy-digital/litex.git deps/litex")
-        os.system("git add deps/litex")
+    elif args.lx_print_deps:
+        lx_print_deps()
 
-        os.system("git submodule add https://github.com/enjoy-digital/litescope deps/litescope")
-        os.system("git add deps/litescope")
+    elif args.init:
+        if args.main is None:
+            main_name = os.getcwd().split(os.path.sep)[-1] + '.py'
+            new_main_name = input('What would you like your main program to be called? [' + main_name + '] ')
+            if new_main_name is not None and new_main_name != "":
+                main_name = new_main_name
+        else:
+            main_name = args.main
+            if not main_name.endswith('.py'):
+                main_name = main_name + '.py'
 
-        os.system("git submodule add https://github.com/pyserial/pyserial.git deps/pyserial")
-        os.system("git add deps/pyserial")
+        if args.no_git:
+            print("skipping git initialization")
+        else:
+            if not os.path.exists(DEPS_DIR):
+                os.mkdir(DEPS_DIR)
 
-        os.system("git submodule update --init --recursive")
+            if not os.path.exists(".git"):
+                print("initializing git repository")
+                lx_git('init')
+            else:
+                print("using existing git repository")
+            lx_git('add', str(__file__))
 
-        bin_tools = {
-            'litex_server': 'litex.soc.tools.remote.litex_server',
-            'litex_term':   'litex.soc.tools.litex_term',
-            'mkmscimg':     'litex.soc.tools.mkmscimg',
-            'mkmscimg':     'litex.soc.tools.mkmscimg',
-            'litex_sim':    'litex.boards.targets.sim',
-            'litex_simple': 'litex.boards.targets.simple',
-        }
-        bin_template = """
+            for dep_name, dep_url in DEFAULT_DEPS.items():
+                dest_path = '{}{}{}'.format(DEPS_DIR, os.path.sep, dep_name)
+                if not os.path.exists(dest_path):
+                    lx_git('submodule', 'add', dep_url, dest_path)
+                    lx_git('add', dest_path)
+
+            lx_git('submodule', 'update', '--init', '--recursive')
+
+        if args.no_bin:
+            print("skipping bin/ initialization")
+        elif os.path.exists("bin"):
+            print("bin/ directory exists -- remove bin/ directory to re-initialize")
+        else:
+            bin_tools = {
+                'litex_server': 'litex.soc.tools.remote.litex_server',
+                'litex_term':   'litex.soc.tools.litex_term',
+                'mkmscimg':     'litex.soc.tools.mkmscimg',
+                'litex_sim':    'litex.boards.targets.sim',
+                'litex_simple': 'litex.boards.targets.simple',
+            }
+            bin_template = """
 #!/usr/bin/env python3
 
 import sys
@@ -284,8 +322,6 @@ sys.path.insert(0, script_path)
 import lxbuildenv
 
 """
-        # Create binary programs under bin/
-        if not os.path.exists("bin"):
             print("Creating binaries")
             os.mkdir("bin")
             for bin_name, python_module in bin_tools.items():
@@ -293,10 +329,15 @@ import lxbuildenv
                     new_bin.write(bin_template)
                     new_bin.write('from ' + python_module + ' import main\n')
                     new_bin.write('main()\n')
-                os.system('git add --chmod=+x bin' + os.path.sep + bin_name)
+                if not args.no_git:
+                    lx_git('add', '--chmod=+x', 'bin' + os.path.sep + bin_name)
 
-        with open(main_name, 'w') as m:
-            program_template = """#!/usr/bin/env python3
+        if os.path.exists(main_name):
+            print("skipping creation of {}: file exists".format(main_name))
+        else:
+            print("creating main program {}".format(main_name))
+            with open(main_name, 'w') as m:
+                program_template = """#!/usr/bin/env python3
 # This variable defines all the external programs that this module
 # relies on.  lxbuildenv reads this variable in order to ensure
 # the build will finish without exiting due to missing third-party
@@ -351,8 +392,12 @@ def main():
 if __name__ == "__main__":
     main()
 """
-            m.write(program_template)
-        return
+                m.write(program_template)
+                if not args.no_git:
+                    lx_git("add", main_name)
+    else:
+        return False
+    return True
 
 # For the main command, parse args and hand it off to main()
 if __name__ == "__main__":
@@ -360,14 +405,30 @@ if __name__ == "__main__":
         description="Wrap Python code to enable quickstart",
         add_help=False)
     parser.add_argument(
-        "-h", "--help", help="show this help message and exit", action="help"
+        "-h", "--help", '--lx-help', help="show this help message and exit", action="help"
     )
     parser.add_argument(
-        '-i', '--init', help='initialize a new project', action="store_true"
+        '-i', '--init', '--lx-init', help='initialize a new project', action="store_true"
+    )
+    parser.add_argument(
+        '-m', '--main', '--lx-main', help='name of main project'
+    )
+    parser.add_argument(
+        '--no-bin', '--lx-no-bin', help="don't create a bin/ directory"
+    )
+    parser.add_argument(
+        '--no-git', '--lx-no-git', help="Don't create a git repository"
+    )
+    parser.add_argument(
+        '-e', '--print-env', '--lx-print-env', dest="lx_print_env", help="print environment variable listing for pycharm, vscode, or bash", action="store_true"
+    )
+    parser.add_argument(
+        '-d', '--print-deps', '--lx-print-deps', dest="lx_print_deps", help="print all possible dependencies and then exit", action="store_true"
     )
     args = parser.parse_args()
 
-    main(args)
+    if not lx_main(args):
+        parser.print_help()
 
 elif not os.path.isfile(sys.argv[0]):
     print("lxbuildenv doesn't operate while in interactive mode")
@@ -396,13 +457,8 @@ elif "LXBUILDENV_REEXEC" not in os.environ:
     )
     (args, rest) = parser.parse_known_args()
 
-    if args.lx_all_deps:
-        print('Known dependencies:')
-        for dep in dependency_checkers.keys():
-            print('    {}'.format(dep))
-        print('To define a dependency, add a variable inside {} at the top level called LX_DEPENDENCIES and assign it a list or tuple.'.format(sys.argv[0]))
-        print('For example:')
-        print('LX_DEPENDENCIES = ("riscv", "vivado")')
+    if args.lx_print_deps:
+        lx_print_deps()
         sys.exit(0)
 
     deps = get_required_dependencies(sys.argv[0])
