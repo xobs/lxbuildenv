@@ -1,0 +1,50 @@
+:toc:
+:toc-placement!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+# lxbuildenv - Simple LiteX Build Environment
+
+lxbuildenv is a Python module that takes care of setting up your build environment for LiteX.  It is simple to use, cross-platform, and self-contained.
+
+## Usage - Initial Setup
+
+NOTE: The initial setup process is, admittedly, a little rough.  Patches are welcome.
+
+You can execute `lxbuildenv.py` directly.  Run `python lxbuildenv.py --init` to create a new project.  This will perform the following steps:
+
+1. Ask you for a main entrypoint name, if `--main` was not set
+1. Create a git repository, if one does not already exist
+1. Create a `bin` directory and populate it, if `--no-bin` was not set
+1. Create an initial template program
+
+From this point onwards, you do not need to invoke `lxbuildenv.py`.  However, it must still be present in order for your program to run.
+
+## Usage - Running your Program
+
+The purpose of `lxbuildenv.py` is to make it easier to get started on a project.  It's also designed to help you work on support libraries.  It tries to use system dependencies whenever possible, including using system Python and system compilers.
+
+As such, `lxbuildenv.py` does some tricky things with `PYTHONPATH`.  It also re-executes itself to ensure `PYTHONHASHSEED` is set.  Additionally, it ensures you have any dependencies installed already.
+
+It does not download dependencies for you -- for certain software that's not even legally allowed.  Instead it makes sure the software exists and is usable, and where to obtain it if it's not available.
+
+The `lxbuildenv.py` script adds several command line arguments to your program.  These all begin with `--lx-`.  To list all parameters provided by `lxbuildenv.py`, run `--lx-help`.
+
+WARNING: Because it adjusts the import path, you must `import lxbuildenv` before you import any other packages.
+
+### Specifying Dependencies
+
+Dependencies are specified by adding a variable in your main file called `LX_DEPENDENCIES`.  The fact that this is a variable rather than some other method should set off alarm bells and tell you something funny is going on in `lxbuildenv.py`.  This is true.
+
+As part of its initialization, `lxbuildenv.py` will read in your program and look for this variable.  It will then check any dependencies you've specified to ensure they are met, and may patch up the environment if necessary.  For example, if you specify `vivado` as a dependency, `lxbuildenv` will make sure it can run the `vivado` program, and will add `/opt/Xilinx/.../` or `C:\\Xilinx\\...` to the `PATH` as necessary.
+
+To list all possible dependencies, run `python lxbuildenv.py --lx-print-deps`.  If you want to try building something without having all the necessary dependencies, add `--lx-ignore-deps` to your build.
+
+## Usage - Tools
+
+As part of its setup, `lxbuildenv.py` creates a `bin/` directory.  These are all very thin wrappers around existing tools.  You can run these tools using `python`.  For example, `python bin/litex_server`.
