@@ -310,14 +310,14 @@ def lx_main(args):
             print("bin/ directory exists -- remove bin/ directory to re-initialize")
         else:
             bin_tools = {
-                'litex_server': 'litex.soc.tools.remote.litex_server',
-                'litex_term':   'litex.soc.tools.litex_term',
-                'mkmscimg':     'litex.soc.tools.mkmscimg',
-                'litex_sim':    'litex.boards.targets.sim',
-                'litex_simple': 'litex.boards.targets.simple',
+                'mkmscimg':           'litex.soc.tools.mkmscimg:main',
+                'litex_term':         'litex.utils.litex_term:main',
+                'litex_server':       'litex.utils.litex_server:main',
+                'litex_sim':          'litex.utils.litex_sim:main',
+                'litex_read_verilog': 'litex.utils.litex_read_verilog:main',
+                'litex_simple':       'litex.boards.targets.simple:main',
             }
-            bin_template = """
-#!/usr/bin/env python3
+            bin_template = """#!/usr/bin/env python3
 
 import sys
 import os
@@ -337,6 +337,8 @@ import lxbuildenv
                     new_bin.write(bin_template)
                     new_bin.write('from ' + python_module + ' import main\n')
                     new_bin.write('main()\n')
+                import stat
+                os.chmod('bin' + os.path.sep + bin_name, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
                 if not args.no_git:
                     lx_git('add', '--chmod=+x', 'bin' + os.path.sep + bin_name)
 
