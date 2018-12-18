@@ -310,12 +310,12 @@ def lx_main(args):
             print("bin/ directory exists -- remove bin/ directory to re-initialize")
         else:
             bin_tools = {
-                'mkmscimg':           'litex.soc.tools.mkmscimg:main',
-                'litex_term':         'litex.utils.litex_term:main',
-                'litex_server':       'litex.utils.litex_server:main',
-                'litex_sim':          'litex.utils.litex_sim:main',
-                'litex_read_verilog': 'litex.utils.litex_read_verilog:main',
-                'litex_simple':       'litex.boards.targets.simple:main',
+                'mkmscimg':           'litex.soc.tools.mkmscimg',
+                'litex_term':         'litex.utils.litex_term',
+                'litex_server':       'litex.utils.litex_server',
+                'litex_sim':          'litex.utils.litex_sim',
+                'litex_read_verilog': 'litex.utils.litex_read_verilog',
+                'litex_simple':       'litex.boards.targets.simple',
             }
             bin_template = """#!/usr/bin/env python3
 
