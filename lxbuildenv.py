@@ -178,6 +178,9 @@ def check_yosys(args):
 def check_arachne(args):
     return check_cmd(args, "arachne-pnr")
 
+def check_icestorm(args):
+    return check_cmd(args, "icepack") and check_cmd(args, "nextpnr-ice40")
+
 dependency_checkers = {
     'python': check_python_version,
     'vivado': check_vivado,
@@ -185,6 +188,7 @@ dependency_checkers = {
     'riscv': check_riscv,
     'yosys': check_yosys,
     'arachne-pnr': check_arachne,
+    'icestorm': check_icestorm,
 }
 
 # Validate that the required dependencies (Vivado, compilers, etc.)
@@ -272,6 +276,18 @@ def lx_main(args):
     elif args.lx_print_deps:
         lx_print_deps()
 
+    elif args.lx_run is not None:
+        script_name=args.lx_run[0]
+        get_required_dependencies(script_name)
+
+        fixup_env(script_path, args)
+        check_submodules(script_path, args)
+
+        try:
+            sys.exit(subprocess.Popen(
+                [sys.executable] + [script_name] + args.lx_run[1:]).wait())
+        except:
+            sys.exit(1)
     elif args.init:
         if args.main is None:
             main_name = os.getcwd().split(os.path.sep)[-1] + '.py'
@@ -361,7 +377,11 @@ import lxbuildenv
 #pylint:disable=E1101
 
 from migen import *
-from litex.build.generic_platform import *
+from litex.build.xilinx import VivadoProgrammer, XilinxPlatform
+from litex.build.generic_platform import Pins, IOStandard
+from litex.soc.integration import SoCSDRAM
+from litex.soc.integration.builder import Builder
+from litex.soc.integration.soc_core import csr_map_update
 
 _io = [
     ("clk50", 0, Pins("J19"), IOStandard("LVCMOS33")),
@@ -434,6 +454,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '-d', '--print-deps', '--lx-print-deps', dest="lx_print_deps", help="print all possible dependencies and then exit", action="store_true"
+    )
+    parser.add_argument(
+        "--lx-verbose", help="increase verboseness of some processes", action="store_true"
+    )
+    parser.add_argument(
+        '-r', '--run', '--lx-run', dest='lx_run', help="run the given script under lxbuildenv", nargs=argparse.REMAINDER
     )
     args = parser.parse_args()
 
