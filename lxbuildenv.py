@@ -14,6 +14,7 @@ DEPS_DIR = "deps"
 DEFAULT_DEPS = {
     'migen':        'https://github.com/m-labs/migen.git',
     'litex':        'https://github.com/enjoy-digital/litex.git',
+    'litedram':     'https://github.com/enjoy-digital/litedram.git',
     'litescope':    'https://github.com/enjoy-digital/litescope.git',
     'pyserial':     'https://github.com/pyserial/pyserial.git',
 }
@@ -21,7 +22,6 @@ DEFAULT_DEPS = {
 OPTIONAL_DEPS = {
     'liteeth':      'https://github.com/enjoy-digital/liteeth.git',
     'liteusb':      'https://github.com/enjoy-digital/liteusb.git',
-    'litedram':     'https://github.com/enjoy-digital/litedram.git',
     'litepcie':     'https://github.com/enjoy-digital/litepcie.git',
     'litesdcard':   'https://github.com/enjoy-digital/litesdcard.git',
     'liteiclink':   'https://github.com/enjoy-digital/liteiclink.git',
