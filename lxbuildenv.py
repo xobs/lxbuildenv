@@ -361,10 +361,10 @@ def lx_main(args):
         else:
             bin_tools = {
                 'mkmscimg':           'litex.soc.tools.mkmscimg',
-                'litex_term':         'litex.utils.litex_term',
-                'litex_server':       'litex.utils.litex_server',
-                'litex_sim':          'litex.utils.litex_sim',
-                'litex_read_verilog': 'litex.utils.litex_read_verilog',
+                'litex_term':         'litex.tools.litex_term',
+                'litex_server':       'litex.tools.litex_server',
+                'litex_sim':          'litex.tools.litex_sim',
+                'litex_read_verilog': 'litex.tools.litex_read_verilog',
                 'litex_simple':       'litex.boards.targets.simple',
             }
             bin_template = """#!/usr/bin/env python3
