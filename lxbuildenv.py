@@ -16,6 +16,9 @@ DEFAULT_DEPS = {
     'litex':        'https://github.com/enjoy-digital/litex.git',
     'litescope':    'https://github.com/enjoy-digital/litescope.git',
     'pyserial':     'https://github.com/pyserial/pyserial.git',
+}
+
+OPTIONAL_DEPS = {
     'liteeth':      'https://github.com/enjoy-digital/liteeth.git',
     'liteusb':      'https://github.com/enjoy-digital/liteusb.git',
     'litedram':     'https://github.com/enjoy-digital/litedram.git',
@@ -23,6 +26,7 @@ DEFAULT_DEPS = {
     'litesdcard':   'https://github.com/enjoy-digital/litesdcard.git',
     'liteiclink':   'https://github.com/enjoy-digital/liteiclink.git',
     'litevideo':    'https://github.com/enjoy-digital/litevideo.git',
+    'usb':          'https://github.com/pyusb/pyusb.git',
 }
 
 # Obtain the path to this script, plus a trailing separator.  This will
@@ -170,7 +174,15 @@ def check_make(args):
     return check_cmd(args, "make", "GNU Make")
 
 def check_riscv(args):
-    return check_cmd(args, "riscv64-unknown-elf-gcc", "riscv toolchain", "download it from https://www.sifive.com/products/tools/")
+    riscv64 = check_cmd(args, "riscv64-unknown-elf-gcc", "riscv toolchain", "download it from https://www.sifive.com/boards/")
+    if riscv64[0] == True:
+        return riscv64
+
+    riscv32 = check_cmd(args, "riscv32-unknown-elf-gcc", "riscv toolchain", "download it from https://www.sifive.com/boards/")
+    if riscv32[0] == True:
+        return riscv32
+
+    return riscv64
 
 def check_yosys(args):
     return check_cmd(args, "yosys")
@@ -221,24 +233,46 @@ def check_dependencies(args, dependency_list):
         sys.exit(0)
 
 # Return True if the given tree needs to be initialized
-def check_module_recursive(root_path, depth, verbose=False):
+def check_module_recursive(root_path, depth, verbose=False, breadcrumbs=[]):
     if verbose:
-        print('git-dep: checking if "{}" requires updating...'.format(root_path))
+        print('git-dep: checking if "{}" requires updating (depth: {})...'.format(root_path, depth))
+
     # If the directory isn't a valid git repo, initialization is required
-    if not os.path.exists(root_path + os.path.sep + '.git'):
+    git_dir_cmd = subprocess.Popen(["git", "rev-parse", "--show-toplevel"],
+                        cwd=root_path,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE)
+    (git_stdout, _) = git_dir_cmd.communicate()
+    if git_dir_cmd.wait() != 0:
+        if verbose:
+            print('git-dep: missing git directory, starting update...')
+        return True
+    git_dir = git_stdout.decode().strip()
+
+    if git_dir in breadcrumbs:
+        if verbose:
+            print('git-dep: root path {} is not in git path'.format(root_path))
+        return True
+    breadcrumbs.append(git_dir)
+
+    if not os.path.exists(git_dir + os.path.sep + '.git'):
+        if verbose:
+            print('git-dep: .git not found in "{}"'.format(git_dir))
         return True
 
     # If there are no submodules, no initialization needs to be done
-    if not os.path.isfile(root_path + os.path.sep + '.gitmodules'):
+    if not os.path.isfile(git_dir + os.path.sep + '.gitmodules'):
+        if verbose:
+            print('git-dep: .gitmodules not found in "{}", so not updating'.format(git_dir))
         return False
 
     # Loop through the gitmodules to check all submodules
-    gitmodules = open(root_path + os.path.sep + '.gitmodules', 'r')
+    gitmodules = open(git_dir + os.path.sep + '.gitmodules', 'r')
     for line in gitmodules:
         parts = line.split("=", 2)
         if parts[0].strip() == "path":
             path = parts[1].strip()
-            if check_module_recursive(root_path + os.path.sep + path, depth + 1, verbose=verbose):
+            if check_module_recursive(git_dir + os.path.sep + path, depth + 1, verbose=verbose, breadcrumbs=breadcrumbs):
                 return True
     return False
 
@@ -349,7 +383,7 @@ import lxbuildenv
             print("Creating binaries")
             os.mkdir("bin")
             for bin_name, python_module in bin_tools.items():
-                with open('bin' + os.path.sep + bin_name, 'w') as new_bin:
+                with open('bin' + os.path.sep + bin_name, 'w', newline='\n') as new_bin:
                     new_bin.write(bin_template)
                     new_bin.write('from ' + python_module + ' import main\n')
                     new_bin.write('main()\n')
