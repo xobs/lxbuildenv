@@ -360,7 +360,7 @@ def lx_main(args):
             print("bin/ directory exists -- remove bin/ directory to re-initialize")
         else:
             bin_tools = {
-                'mkmscimg':           'litex.soc.tools.mkmscimg',
+                'mkmscimg':           'litex.soc.software.mkmscimg',
                 'litex_term':         'litex.tools.litex_term',
                 'litex_server':       'litex.tools.litex_server',
                 'litex_sim':          'litex.tools.litex_sim',
