@@ -17,7 +17,6 @@ DEFAULT_DEPS = {
     'litedram':     'https://github.com/enjoy-digital/litedram.git',
     'litex_boards': 'https://github.com/litex-hub/litex-boards.git',
     'litescope':    'https://github.com/enjoy-digital/litescope.git',
-    'pyserial':     'https://github.com/pyserial/pyserial.git',
 }
 
 OPTIONAL_DEPS = {
@@ -27,6 +26,7 @@ OPTIONAL_DEPS = {
     'litesdcard':   'https://github.com/enjoy-digital/litesdcard.git',
     'liteiclink':   'https://github.com/enjoy-digital/liteiclink.git',
     'litevideo':    'https://github.com/enjoy-digital/litevideo.git',
+    'pyserial':     'https://github.com/pyserial/pyserial.git',
     'usb':          'https://github.com/pyusb/pyusb.git',
 }
 
