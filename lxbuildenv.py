@@ -214,6 +214,9 @@ def check_icestorm(args):
 def check_nextpnr_ice40(args):
     return check_cmd(args, "nextpnr-ice40")
 
+def check_nextpnr_ecp5(args):
+    return check_cmd(args, "nextpnr-ecp5")
+
 dependency_checkers = {
     'python': check_python_version,
     'vivado': check_vivado,
@@ -224,6 +227,7 @@ dependency_checkers = {
     'arachne-pnr': check_arachne,
     'icestorm': check_icestorm,
     'nextpnr-ice40': check_nextpnr_ice40,
+    'nextpnr-ecp5': check_nextpnr_ecp5,
 }
 
 # Validate that the required dependencies (Vivado, compilers, etc.)
