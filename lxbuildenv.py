@@ -497,7 +497,7 @@ if __name__ == "__main__":
     return True
 
 # For the main command, parse args and hand it off to main()
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         description="Wrap Python code to enable quickstart",
         add_help=False)
@@ -532,6 +532,9 @@ if __name__ == "__main__":
 
     if not lx_main(args):
         parser.print_help()
+
+if __name__ == "__main__":
+    main()
 
 elif not os.path.isfile(sys.argv[0]):
     print("lxbuildenv doesn't operate while in interactive mode")
