@@ -3,7 +3,7 @@
 # This script enables easy, cross-platform building without the need
 # to install third-party Python modules.
 
-LXBUILDENV_VERSION = '2019.8.19.1'
+LXBUILDENV_VERSION = '2020.2.18.1'
 import sys
 import os
 import subprocess
