@@ -544,6 +544,9 @@ def main():
     parser.add_argument(
         '-r', '--run', '--lx-run', dest='lx_run', help="run the given script under lxbuildenv", nargs=argparse.REMAINDER
     )
+    parser.add_argument(
+        "--lx-recursive-git", help="recursively check out submodules", action="store_true"
+    )
     args = parser.parse_args()
 
     if not lx_main(args):
